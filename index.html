@@ -1,178 +1,43 @@
-<!DOCTYPE html>
+      <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Midnight Room</title>
-  <style>
-    /* --- STYLES --- */
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0b0c10;
-      color: #f5f5f5;
-      overflow: hidden;
-    }
-
-    .room {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-    }
-
-    /* Clickable object as a circle */
-    #clickable-object {
-      position: absolute;
-      bottom: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 80px;
-      background: radial-gradient(circle, #66fcf1, #1f2833);
-      border-radius: 50%;
-      cursor: pointer;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 0 20px #66fcf1;
-    }
-
-    #clickable-object:hover {
-      transform: translateX(-50%) scale(1.1);
-      box-shadow: 0 0 35px #45a29e;
-    }
-
-    #message {
-      position: absolute;
-      top: 20px;
-      width: 100%;
-      font-size: 18px;
-      text-shadow: 0 0 8px #fff;
-    }
-
-    #music-btn {
-      position: absolute;
-      top: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 20px;
-      border: none;
-      background: #1f2833;
-      color: #66fcf1;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s;
-    }
-
-    #music-btn:hover {
-      background: #45a29e;
-    }
-
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Audio Player</title>
+<style>
+body {background:#0b0c10; color:#66fcf1; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:'Segoe UI', sans-serif;}
+input, button {padding:10px; margin:10px; border-radius:8px; border:none;}
+button {background:#1f2833; color:#66fcf1; cursor:pointer;}
+button:hover {background:#45a29e;}
+iframe {width:0; height:0; border:0; /* hide video */ }
+</style>
 </head>
 <body>
-  <div class="room">
-    <canvas id="particles"></canvas>
-    <div id="clickable-object"></div>
-    <div id="message">✨ Click the glowing orb for a hidden message ✨</div>
-    <button id="music-btn">🎧 Play Lo-fi</button>
-  </div>
 
-  <!-- Embedded Lo-fi music base64 -->
-  <audio id="music" loop>
-    <source src="data:audio/mp3;base64,//uQxAA..." type="audio/mp3">
-    <!-- Replace "//uQxAA..." with your base64-encoded mp3 -->
-  </audio>
+<h2>YouTube Audio Player</h2>
+<input type="text" id="yt-link" placeholder="Paste YouTube link here">
+<button id="play-btn">Play Audio</button>
+<div id="player"></div>
 
-  <script>
-    /* --- SCRIPT --- */
-    // MUSIC BUTTON
-    const musicBtn = document.getElementById('music-btn');
-    const music = document.getElementById('music');
+<script>
+const btn = document.getElementById('play-btn');
+const input = document.getElementById('yt-link');
+const playerDiv = document.getElementById('player');
 
-    musicBtn.addEventListener('click', () => {
-      if (music.paused) {
-        music.play();
-        musicBtn.textContent = '🔇 Pause Lo-fi';
-      } else {
-        music.pause();
-        musicBtn.textContent = '🎧 Play Lo-fi';
-      }
-    });
+btn.addEventListener('click', ()=>{
+  let url = input.value.trim();
+  if(!url) return alert("Paste a YouTube link!");
+  
+  // Extract video ID from URL
+  const regex = /(?:youtube\.com.*v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
+  const match = url.match(regex);
+  if(!match) return alert("Invalid YouTube link!");
+  const videoID = match[1];
 
-    // CLICKABLE OBJECT
-    const object = document.getElementById('clickable-object');
-    const message = document.getElementById('message');
+  // Create iframe
+  playerDiv.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoID}?autoplay=1&controls=0&modestbranding=1" allow="autoplay"></iframe>`;
+});
+</script>
 
-    object.addEventListener('click', () => {
-      message.textContent = "🌌 The midnight whispers your secrets...";
-      setTimeout(() => {
-        message.textContent = "✨ Click the glowing orb for a hidden message ✨";
-      }, 4000);
-    });
-
-    // PARTICLE EFFECT
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particlesArray = [];
-    const colors = ['#66fcf1', '#45a29e', '#c5c6c7', '#1f2833'];
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 1;
-        this.speedX = Math.random() * 0.5 - 0.25;
-        this.speedY = Math.random() * 0.5 - 0.25;
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-      draw() {
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function initParticles() {
-      for (let i = 0; i < 100; i++) {
-        particlesArray.push(new Particle());
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particlesArray.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      requestAnimationFrame(animate);
-    }
-
-    initParticles();
-    animate();
-
-    // Resize canvas on window change
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-  </script>
 </body>
 </html>
